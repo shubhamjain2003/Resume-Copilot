@@ -40,11 +40,12 @@ Resume-Copilot
 ## 🚀 Installation
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/Resume-Copilot.git
+git clone https://github.com/shubhamjain2003/Resume-Copilot.git
 
 cd Resume-Copilot
 
 python -m venv .venv
+
 
 .\.venv\Scripts\activate
 
