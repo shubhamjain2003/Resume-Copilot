@@ -1,29 +1,27 @@
-from pathlib import Path
 import os
 
 from dotenv import load_dotenv
 from google import genai
+from google.genai.errors import ClientError
 
-BASE_DIR = Path(__file__).resolve().parent.parent
-load_dotenv(BASE_DIR / ".env")
+# Load environment variables
+load_dotenv()
 
-client = genai.Client(
-    api_key=os.getenv("GOOGLE_API_KEY")
-)
+# Configure Gemini
+client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
 
 
 def ask_gemini(context, question):
     """
-    Ask Gemini using the retrieved resume context.
+    Sends the retrieved resume context and user question to Gemini.
     """
 
     prompt = f"""
 You are an AI Resume Assistant.
 
-Answer ONLY using the information present in the resume context.
+Answer ONLY using the information provided in the resume context.
 
-If the answer is not available in the resume,
-say:
+If the answer is not present in the context, say:
 "I couldn't find that information in the resume."
 
 Resume Context:
@@ -31,11 +29,35 @@ Resume Context:
 
 Question:
 {question}
+
+Answer:
 """
 
-    response = client.models.generate_content(
-        model="gemini-2.5-flash",
-        contents=prompt,
-    )
+    try:
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=prompt,
+        )
 
-    return response.text
+        return response.text
+
+    except ClientError as e:
+        error = str(e)
+
+        if "429" in error:
+            return (
+                "⚠️ Gemini API quota exceeded.\n"
+                "Please wait a few minutes or use another API key."
+            )
+
+        elif "API_KEY_INVALID" in error or "401" in error:
+            return (
+                "❌ Invalid Gemini API Key.\n"
+                "Please check your GOOGLE_API_KEY in the .env file."
+            )
+
+        else:
+            return f"Gemini API Error:\n{error}"
+
+    except Exception as e:
+        return f"Unexpected Error:\n{e}"
